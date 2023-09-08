@@ -1,37 +1,28 @@
-use std::io::{self, Read, stdout};
-use termion::raw::IntoRawMode;
-
-fn to_ctrl_byte(c: char) -> u8 {
-    let byte = c as u8;
-
-    // 'ctrl + key' bytes only contain 5 bits
-    byte & 0b0001_1111
-}
+use std::io::{self, stdout};
+use termion::{raw::IntoRawMode, event::Key, input::TermRead};
 
 fn die(err: std::io::Error) {
-    panic!(e);
+    panic!("{}", err);
 }
 
 fn main() {
     let _stdout = stdout().into_raw_mode().unwrap();
 
-    for byte in io::stdin().bytes() {
+    for key in io::stdin().keys() {
         
-        match byte {
-            Ok(byte) => {
-                println!("{:#b} \r", byte);
+        match key {
+            Ok(key) => match key {
+                Key::Char(c) => {
+                    
+                    if c.is_control() {
+                        println!("{:?} \r", c as u8);
+                    } else {
+                        println!("{:?} ({})\r", c as u8, c);
+                    }
 
-                let character = byte as char;
-
-                if character.is_control() {
-                    println!("{:?} \r", byte);
-                } else {
-                    println!("{:?} ({})\r", byte, character);
-                }
-
-                if byte == to_ctrl_byte('q') {
-                    break;
-                }
+                },
+                Key::Ctrl('q') => break,
+                _ => println!("{:?} \r", key),
             },
             Err(err) => die(err),
         }
